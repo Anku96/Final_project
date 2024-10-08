@@ -1,3 +1,4 @@
+
 """
 Django settings for Ecartapp_project project.
 
@@ -31,6 +32,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'accounts',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -68,6 +70,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'Ecartapp_project.wsgi.application'
+
+AUTH_USER_MODEL = 'accounts.Account'
 
 
 # Database
