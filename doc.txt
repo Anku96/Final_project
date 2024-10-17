@@ -1,0 +1,53 @@
+1) In accounts folder, create a new file forms.py
+    -   from django import forms
+        from .models import Account
+
+        class RegistrationForm(forms.ModelForm):
+            class Meta:
+                model = Account
+                fields = ['first_name','last_name','phone_number','email','password']
+
+2) Then inside accounts/views.py do following changes:
+
+    from django.shortcuts import render
+    from .forms import RegistrationForm
+
+    def register(request):
+        form = RegistrationForm()
+        context = {
+            'form':form
+        }
+        return render(request,'accounts/register.html', context)
+
+3) Now we have this form variable available in this register.html
+
+4) Now do changes inside register.html
+
+5) Add this to accounts/forms.py
+    from django import forms
+    from .models import Account
+
+    class RegistrationForm(forms.ModelForm):
+        password = forms.CharField(widget=forms.PasswordInput(attrs={
+            'placeholder':'Enter password'
+        }))
+
+        confirm_password = forms.CharField(widget=forms.PasswordInput(attrs={
+            'placeholder':'Confirm password'
+        }))
+        class Meta:
+            model = Account
+            fields = ['first_name','last_name','phone_number','email','password']
+
+        def __init__(self, *args, **kwargs):
+            super(RegistrationForm, self).__init__(*args, **kwargs)
+            self.fields['first_name'].widget.attrs['placeholder']='Enter first name'
+            self.fields['last_name'].widget.attrs['placeholder']='Enter last name'
+            for field in self.fields:
+                self.fields[field].widget.attrs['class']='form-control'
+
+        - The above init method is to give all the fields bootstrap 'form-control' class
+          and you can also give placeholder to the all the specific fields
+6) git add and cummit just we have done some changes in Final project
+-templates 
+-form.py
