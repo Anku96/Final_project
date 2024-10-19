@@ -48,6 +48,6 @@
 
         - The above init method is to give all the fields bootstrap 'form-control' class
           and you can also give placeholder to the all the specific fields
-6) git add and cummit just we have done some changes in Final project
+6) git add and commit just we have done some changes in Final project
 -templates 
 -form.py
