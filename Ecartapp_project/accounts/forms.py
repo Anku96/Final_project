@@ -3,7 +3,7 @@ from .models import Account
 
 class RegistrationForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput(attrs={
-            'placeholder':'Enter password'
+            'placeholder':'Enter password again'
         }))
 
     confirm_password = forms.CharField(widget=forms.PasswordInput(attrs={
