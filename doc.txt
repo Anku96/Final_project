@@ -51,3 +51,174 @@
 6) git add and commit just we have done some changes in Final project
 -templates 
 -form.py
+
+
+6) Then again make changes inside register.html to handle post data request:
+        from django.shortcuts import render
+        from .forms import RegistrationForm
+        from .models import Account
+
+        def register(request):
+            if request.method == 'POST':
+                form = RegistrationForm(request.POST)
+                if form.is_valid():
+                    first_name = form.cleaned_data['first_name']
+                    last_name = form.cleaned_data['last_name']
+                    phone_number = form.cleaned_data['phone_number']
+                    email = form.cleaned_data['email']
+                    password = form.cleaned_data['password']
+                    username = email.split("@")[0]
+                    user = Account.objects.create_user(first_name=first_name, last_name=last_name, email=email, username=username, password=password)
+                    user.phone_number = phone_number
+                    user.save()
+            else:
+                form = RegistrationForm()
+            context = {
+                'form': form,
+            }
+            return render(request, 'accounts/register.html', context)
+
+7) Create a function inside accounts/forms.py to check password and confirm_password are the same.
+        def clean(self):
+        cleaned_data = super(RegistrationForm, self).clean()
+        password = cleaned_data.get('password')
+        confirm_password = cleaned_data.get('confirm_password')
+
+        if password != confirm_password:
+            raise forms.ValidationError(
+                "Password does not match!"
+            )
+    - and also put {{form.email.errors}} and {{form.non_field_errors}} below the submit button inside register.html
+
+8) Now use django message inside settings.py 
+        from django.contrib.messages import constants as messages
+        MESSAGE_TAGS = {
+            messages.ERROR: 'danger',
+        }
+9) Create alerts.html inside includes folder for the django messaging framework:
+        {% if messages %}
+
+        {% for message in messages %}
+        <div id="message" class="container">
+        <div {% if message.tags %} class="alert alert-{{ message.tags }}"{% endif %} role="alert">
+        <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span></button>
+            {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}Error: {% endif %}
+            {{ message }}
+        </div>
+        </div>
+        {% endfor %}
+
+        {% endif %}
+
+10) Include alerts.html inside register.html 
+
+11) You can put the below code inside ecartproject/static/js/script.js
+        setTimeout(function(){
+            $('#message').fadeOut('slow')
+            },4000)
+
+12) User Login Functionality:
+      - copy the template like we did in sign up form
+      - do this:
+            <form action="{% url 'login' %}" method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <input type="email" class="form-control" placeholder="Email Address" name="email">
+            </div> <!-- form-group// -->
+            <div class="form-group">
+            <input type="password" class="form-control" placeholder="Password" name="password">
+            </div> <!-- form-group// --
+      
+      - accounts/views.py
+            def login(request):
+                if request.method == 'POST':
+                    email = request.POST['email']
+                    password = request.POST['password']
+
+                    user = auth.authenticate(email=email, password=password)
+
+                    if user is not None:
+                        auth.login(request,user)
+                        # messages.success(request,'You are now logged in')
+                        return redirect('home')
+                    else:
+                        messages.error(request,'Invalid login credentials')
+                        return redirect('login')
+                return render(request,'accounts/login.html')
+        - Put this in  {% include 'includes/alerts.html' %} login.html to see the messages
+        - and one more thing once you are logged in you should only see logout in the header,
+            do these steps inside navbar.html
+             <div class="d-flex justify-content-end mb-3 mb-lg-0">
+                {% if user.id is None %}
+                <div class="widget-header">
+                    <small class="title text-muted">Welcome guest!</small>
+                    <div>
+                        <a href="{% url 'login' %}">Sign in</a> <span class="dark-transp"> | </span>
+                        <a href="{% url 'register' %}"> Register</a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="widget-header">
+                    <small class="title text-muted">{{user.first_name}}</small>
+                    <div>
+                        <a href="#">Dashboard</a> <span class="dark-transp"> | </span>
+                        <a href="{% url 'logout' %}"> Logout</a>
+                    </div>
+                </div>
+            {% endif %}
+
+13) Add logout Functionality also, we can do it as following:
+        accounts/views.py
+        @login_required(login_url = 'login')
+        def logout(request):
+            auth.logout(request)
+            messages.success(request, 'You are logged out.')
+            return redirect('login')
+
+
+
+
+
+
+
+
+
+
+14) Next we have checkout button functionality:
+        -> Inside cart/urls.py do this:
+            path('checkout/', views.checkout, name='checkout'),
+            also create a function checkout inside carts/view.py
+            def checkout(request):
+                return render(request,'store/checkout.html')
+15) Create the checkout.html page using template design pattern.
+16) Then create the function logic as follows:
+        @login_required(login_url='login')
+        def checkout(request, total=0, quantity=0, cart_items=None):
+            try:
+                tax = 0
+                grand_total = 0
+                if request.user.is_authenticated:
+                    cart_items = CartItem.objects.filter(user=request.user, is_active=True)
+                else:
+                    cart = Cart.objects.get(cart_id=_cart_id(request))
+                    cart_items = CartItem.objects.filter(cart=cart, is_active=True)
+                for cart_item in cart_items:
+                    total += (cart_item.product.price * cart_item.quantity)
+                    quantity += cart_item.quantity
+                tax = (2 * total)/100
+                grand_total = total + tax
+            except ObjectDoesNotExist:
+                pass #just ignore
+
+            context = {
+                'total': total,
+                'quantity': quantity,
+                'cart_items': cart_items,
+                'tax'       : tax,
+                'grand_total': grand_total,
+            }
+            return render(request, 'store/checkout.html', context)
+
+17) Fix inside templates/store/cart.html for the checkout button opening on the specific url:
+        - <a href="{% url 'checkout' %}" class="btn btn-primary btn-block"> Checkout </a>
+
